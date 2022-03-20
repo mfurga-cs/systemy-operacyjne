@@ -1,16 +1,15 @@
-/*
-  Operating systems: lab2-3a
-  Mateusz Furga <mfurga@student.agh.edu.pl>
-*/
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
 #include <dirent.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
+#include <fcntl.h>
 
 #define T_FILE 0
 #define T_DIRECTORY 1
@@ -20,7 +19,7 @@
 #define T_SYMLINK 5
 #define T_SOCKET 6
 
-char path_buff[1024] = {0};
+char path_buff[16 * 1024];
 unsigned counts[7] = {0};
 
 const char *file_type(struct stat *st)
@@ -91,6 +90,11 @@ void scan(int offset)
       continue;
     }
 
+    if (offset + 1 + strlen(ent->d_name) >= sizeof(path_buff)) {
+      fprintf(stderr, "Buffor too small\n");
+      return;
+    }
+
     path_buff[offset] = '/';
     memcpy(path_buff + offset + 1, ent->d_name, strlen(ent->d_name));
     path_buff[offset + 1 + strlen(ent->d_name)] = '\0';
@@ -114,13 +118,21 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  realpath(argv[1], path_buff);
-  int length = 0;
-  while (path_buff[length] != 0) {
-    length++;
+  char *p = realpath(argv[1], NULL);
+  if (p == NULL) {
+    fprintf(stderr, "Realpath error\n");
+    return 1;
   }
 
-  scan(length);
+  if (strlen(p) >= sizeof(path_buff)) {
+    fprintf(stderr, "Buffor too small\n");
+    return 1;
+  }
+
+  memcpy(path_buff, p, strlen(p));
+  free(p);
+
+  scan(strlen(p));
 
   printf("\n    === STATS ===    \n"
          "Files:               %u\n"

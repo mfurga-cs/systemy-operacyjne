@@ -1,8 +1,3 @@
-/*
-  Operating systems: lab2-3b
-  Mateusz Furga <mfurga@student.agh.edu.pl>
-*/
-
 #define _XOPEN_SOURCE 500
 
 #include <stdio.h>
@@ -22,7 +17,7 @@
 #define T_SYMLINK 5
 #define T_SOCKET 6
 
-char absolute_path[1024];
+char absolute_path[16 * 1024];
 unsigned counts[7] = {0};
 
 const char *file_type(struct stat *st)
@@ -92,7 +87,20 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  realpath(argv[1], absolute_path);
+  char *p = realpath(argv[1], NULL);
+  if (p == NULL) {
+    fprintf(stderr, "Realpath error\n");
+    return 1;
+  }
+
+  if (strlen(p) >= sizeof(absolute_path)) {
+    fprintf(stderr, "Buffor too small\n");
+    return 1;
+  }
+
+  memcpy(absolute_path, p, strlen(p));
+  free(p);
+
   nftw(absolute_path, filter, 0, FTW_PHYS);
 
   printf("\n    === STATS ===    \n"

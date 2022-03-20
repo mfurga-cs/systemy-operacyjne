@@ -1,30 +1,7 @@
-/*
-  Operating systems: lab2-1a
-  Mateusz Furga <mfurga@student.agh.edu.pl>
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-/* Debug and error macros */
-
-#ifndef MESSAGES_TO_STDERR
-#  define SAYF(x...) printf(x)
-#else
-#  define SAYF(x...) fprintf(stderr, x)
-#endif
-
-#define DEBUGF(x...) do { \
-    SAYF("[*] " x); \
-    SAYF("\n"); \
-  } while (0)
-
-#define FATALF(x...) do { \
-    SAYF("[-] " x); \
-    SAYF("\n"); \
-  } while (0)
 
 int remove_empty_lines(const char *in, const char *out)
 {
@@ -34,13 +11,13 @@ int remove_empty_lines(const char *in, const char *out)
 
   FILE *fin = fopen(in, "r");
   if (fin == NULL) {
-    FATALF("Cannot open %s to read", in);
+    fprintf(stderr, "Cannot open %s to read", in);
     return 1;
   }
 
   FILE *fout = fopen(out, "w");
   if (fout == NULL) {
-    FATALF("Cannot open %s to write", out);
+    fprintf(stderr, "Cannot open %s to write", out);
 
     /* NOTE: OS will release all open descriptors, allocated memory and
              other stuff after killing the process. Therefore we can skip
@@ -56,7 +33,7 @@ int remove_empty_lines(const char *in, const char *out)
 
   buff_in = malloc(buff_sz);
   if (buff_in == NULL) {
-    FATALF("Run out of memory");
+    fprintf(stderr, "Run out of memory");
 
     /* Note above. */
     fclose(fin);
@@ -67,7 +44,7 @@ int remove_empty_lines(const char *in, const char *out)
 
   buff_out = malloc(buff_sz);
   if (buff_out == NULL) {
-    FATALF("Run out of memory");
+    fprintf(stderr, "Run out of memory");
 
     /* Note above. */
     fclose(fin);
@@ -78,7 +55,7 @@ int remove_empty_lines(const char *in, const char *out)
   }
 
   if (fread(buff_in, 1, buff_sz, fin) != buff_sz) {
-    FATALF("Unable to read %s file", in);
+    fprintf(stderr, "Unable to read %s file", in);
 
     /* Note above. */
     fclose(fin);
@@ -139,14 +116,14 @@ int main(int argc, char *argv[])
     out_sz = strlen(argv[2]);
 
     if (in_sz >= 256 || out_sz >= 256) {
-      FATALF("Given filename is too long.");
+      fprintf(stderr, "Given filename is too long.");
       return 1;
     }
 
     memcpy(in, argv[1], in_sz);
     memcpy(out, argv[2], out_sz);
   } else {
-    FATALF("Usage %s <in> <out>", argv[0]);
+    fprintf(stderr, "Usage %s <in> <out>", argv[0]);
     return 1;
   }
 

@@ -1,12 +1,10 @@
-/*
-  Operating systems: lab2-2a
-  Mateusz Furga <mfurga@student.agh.edu.pl>
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 int main(int argc, char *argv[])
 {
@@ -23,21 +21,21 @@ int main(int argc, char *argv[])
   char c = argv[1][0];
   char *fn = argv[2];
 
-  FILE *f = fopen(fn, "r");
-  if (f == NULL) {
+  int fd = open(fn, O_RDONLY);
+  if (fd == -1) {
     fprintf(stderr, "Cannot open %s to read\n", fn);
     return 1;
   }
 
-  size_t read;
+  int r;
   char buff[1024];
 
   unsigned char_ctr = 0;
   unsigned line_ctr = 0;
   int first_in_line = 1;
 
-  while ((read = fread(buff, 1, sizeof(buff), f)) > 0) {
-    for (int i = 0; i < read; i++) {
+  while ((r = read(fd, buff, sizeof(buff))) > 0) {
+    for (int i = 0; i < r; i++) {
       if (buff[i] == c) {
         char_ctr++;
         if (first_in_line == 1) {
@@ -51,7 +49,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  fclose(f);
+  close(fd);
 
   printf("Characters count: %u\n"
          "Lines count:    : %u\n", char_ctr, line_ctr);

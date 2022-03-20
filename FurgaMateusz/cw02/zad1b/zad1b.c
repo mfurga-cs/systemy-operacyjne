@@ -1,32 +1,12 @@
-/*
-  Operating systems: lab2-1b
-  Mateusz Furga <mfurga@student.agh.edu.pl>
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
-
-/* Debug and error macros */
-
-#ifndef MESSAGES_TO_STDERR
-#  define SAYF(x...) printf(x)
-#else
-#  define SAYF(x...) fprintf(stderr, x)
-#endif
-
-#define DEBUGF(x...) do { \
-    SAYF("[*] " x); \
-    SAYF("\n"); \
-  } while (0)
-
-#define FATALF(x...) do { \
-    SAYF("[-] " x); \
-    SAYF("\n"); \
-  } while (0)
 
 int remove_empty_lines(const char *in, const char *out)
 {
@@ -36,19 +16,15 @@ int remove_empty_lines(const char *in, const char *out)
 
   int din = open(in, O_RDONLY);
   if (din == -1) {
-    FATALF("Cannot open %s to read", in);
+    fprintf(stderr, "Cannot open %s to read\n", in);
     return 1;
   }
 
   int dout = open(out, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
   if (dout == -1) {
-    FATALF("Cannot open %s to write", out);
+    fprintf(stderr, "Cannot open %s to write\n", out);
 
-    /* NOTE: OS will release all open descriptors, allocated memory and
-             other stuff after killing the process. Therefore we can skip
-             freeing memory and closing files. */
     close(din);
-
     return 1;
   }
 
@@ -58,36 +34,30 @@ int remove_empty_lines(const char *in, const char *out)
 
   buff_in = malloc(buff_sz);
   if (buff_in == NULL) {
-    FATALF("Run out of memory");
+    fprintf(stderr, "Run out of memory\n");
 
-    /* Note above. */
     close(din);
     close(dout);
-
     return 1;
   }
 
   buff_out = malloc(buff_sz);
   if (buff_out == NULL) {
-    FATALF("Run out of memory");
+    fprintf(stderr, "Run out of memory\n");
 
-    /* Note above. */
     close(din);
     close(dout);
     free(buff_in);
-
     return 1;
   }
 
   if (read(din, buff_in, buff_sz) != buff_sz) {
-    FATALF("Unable to read %s file", in);
+    fprintf(stderr, "Unable to read %s file\n", in);
 
-    /* Note above. */
     close(din);
     close(dout);
     free(buff_in);
     free(buff_out);
-
     return 1;
   }
 
@@ -117,7 +87,16 @@ int remove_empty_lines(const char *in, const char *out)
     }
   }
 
-  write(dout, buff_out, write_ptr);
+  if (write(dout, buff_out, write_ptr) != write_ptr) {
+    fprintf(stderr, "Unable to write %s file\n", out);
+
+    close(dout);
+    free(buff_in);
+    free(buff_out);
+    return 1;
+  }
+
+
   close(dout);
 
   free(buff_in);
@@ -131,25 +110,22 @@ int main(int argc, char *argv[])
   char in[256], out[256];
   int in_sz, out_sz;
 
-  if (argc < 3) {
+  if (argc != 3) {
     printf("IN: ");
-    scanf("%255s", in);
+    (void)!scanf("%255s", in);
     printf("OUT: ");
-    scanf("%255s", out);
-  } else if (argc == 3) {
+    (void)!scanf("%255s", out);
+  } else {
     in_sz = strlen(argv[1]);
     out_sz = strlen(argv[2]);
 
     if (in_sz >= 256 || out_sz >= 256) {
-      FATALF("Given filename is too long.");
+      fprintf(stderr, "Given filename is too long\n");
       return 1;
     }
 
     memcpy(in, argv[1], in_sz);
     memcpy(out, argv[2], out_sz);
-  } else {
-    FATALF("Usage %s <in> <out>", argv[0]);
-    return 1;
   }
 
   return remove_empty_lines(in, out);

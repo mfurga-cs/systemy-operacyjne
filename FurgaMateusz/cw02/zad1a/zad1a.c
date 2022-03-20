@@ -5,7 +5,7 @@
 
 int remove_empty_lines(const char *in, const char *out)
 {
-  int buff_sz;
+  unsigned buff_sz;
   char *buff_in;
   char *buff_out;
 
@@ -19,11 +19,7 @@ int remove_empty_lines(const char *in, const char *out)
   if (fout == NULL) {
     fprintf(stderr, "Cannot open %s to write", out);
 
-    /* NOTE: OS will release all open descriptors, allocated memory and
-             other stuff after killing the process. Therefore we can skip
-             freeing memory and closing files. */
     fclose(fin);
-
     return 1;
   }
 
@@ -35,7 +31,6 @@ int remove_empty_lines(const char *in, const char *out)
   if (buff_in == NULL) {
     fprintf(stderr, "Run out of memory");
 
-    /* Note above. */
     fclose(fin);
     fclose(fout);
 
@@ -46,7 +41,6 @@ int remove_empty_lines(const char *in, const char *out)
   if (buff_out == NULL) {
     fprintf(stderr, "Run out of memory");
 
-    /* Note above. */
     fclose(fin);
     fclose(fout);
     free(buff_in);
@@ -57,7 +51,6 @@ int remove_empty_lines(const char *in, const char *out)
   if (fread(buff_in, 1, buff_sz, fin) != buff_sz) {
     fprintf(stderr, "Unable to read %s file", in);
 
-    /* Note above. */
     fclose(fin);
     fclose(fout);
     free(buff_in);
@@ -74,7 +67,7 @@ int remove_empty_lines(const char *in, const char *out)
   int line_begin = 0;
   int write_ptr = 0;
 
-  for (int i = 0; i < buff_sz; i++) {
+  for (unsigned i = 0; i < buff_sz; i++) {
     if (buff_in[i] == '\n') {
 
       if (whitespace_char_line == 0) {
@@ -106,12 +99,12 @@ int main(int argc, char *argv[])
   char in[256], out[256];
   int in_sz, out_sz;
 
-  if (argc < 3) {
+  if (argc != 3) {
     printf("IN: ");
-    scanf("%255s", in);
+    (void)!scanf("%255s", in);
     printf("OUT: ");
-    scanf("%255s", out);
-  } else if (argc == 3) {
+    (void)!scanf("%255s", out);
+  } else {
     in_sz = strlen(argv[1]);
     out_sz = strlen(argv[2]);
 
@@ -122,9 +115,6 @@ int main(int argc, char *argv[])
 
     memcpy(in, argv[1], in_sz);
     memcpy(out, argv[2], out_sz);
-  } else {
-    fprintf(stderr, "Usage %s <in> <out>", argv[0]);
-    return 1;
   }
 
   return remove_empty_lines(in, out);

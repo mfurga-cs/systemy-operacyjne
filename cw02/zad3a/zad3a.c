@@ -92,6 +92,7 @@ void scan(int offset)
 
     if (offset + 1 + strlen(ent->d_name) >= sizeof(path_buff)) {
       fprintf(stderr, "Buffor too small\n");
+      closedir(d);
       return;
     }
 

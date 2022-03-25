@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +14,10 @@ int start_idx = 0;
 int search(int offset, char *pattern, int depth)
 {
   struct dirent *ent;
+
+  if (depth == 0) {
+    return 0;
+  }
 
   DIR *d = opendir(abs_path);
   if (d == NULL) {
@@ -34,12 +40,43 @@ int search(int offset, char *pattern, int depth)
     memcpy(abs_path + offset + 1, ent->d_name, strlen(ent->d_name));
     abs_path[offset + 1 + strlen(ent->d_name)] = '\0';
 
-    printf("%s\n", abs_path);
+    if (ent->d_type == DT_REG) {
+      FILE *f = fopen(abs_path, "r");
+      if (f == NULL) {
+        fprintf(stderr, "Failed to open file to read %s\n", abs_path);
+        continue;
+      }
+
+      fseek(f, 0, SEEK_END);
+      int sz = ftell(f);
+      fseek(f, 0, SEEK_SET);
+
+      if (sz == 0) {
+        fclose(f);
+        continue;
+      }
+
+      char *fb = malloc(sz + 1);
+      if (fb == NULL) {
+        fprintf(stderr, "Failed to allocate memory for file %s\n", abs_path);
+        fclose(f);
+        continue;
+      }
+      fb[sz] = 0;
+
+      (void)!fread(fb, sz, 1, f);
+      fclose(f);
+
+      if (strstr(fb, pattern) != NULL) {
+        printf("[%u] %s\n", getpid(), abs_path + start_idx);
+      }
+
+      free(fb);
+    }
 
     if (ent->d_type == DT_DIR) {
       pid_t pid = fork();
       if (pid == 0) {  /* Child. */
-        printf("Child process created for %s\n", abs_path + start_idx);
         return search(offset + 1 + strlen(ent->d_name), pattern, depth - 1);
       }
     }
@@ -76,10 +113,10 @@ int main(int argc, char **argv)
   pid_t pid = fork();
 
   if (pid == 0) {
-    return search(strlen(path), path, depth);
+    return search(start_idx - 1, argv[2], depth);
   }
 
-  printf("Process created (pid=%u)\n", pid);
+  waitpid(pid, NULL, 0);
 
   return 0;
 }

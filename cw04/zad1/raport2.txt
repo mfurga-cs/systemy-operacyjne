@@ -1,0 +1,11 @@
+
+Proces dziecko po forku: 
+- dziedziczy ignorowanie sygnału
+- dziedziczy obsługe sygnałów
+- dziedziczy maski
+- nie dziedziczy sygnałów oczekujących
+
+Proces dziecko po exec:
+- dziedziczy ignorowanie sygnału
+- dziedziczy maski
+- dziedziczy sygnały oczekujące

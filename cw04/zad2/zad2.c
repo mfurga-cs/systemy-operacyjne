@@ -54,7 +54,7 @@ int main(void)
     close(1);
   }
 
-	for (;;);
-	return 0;
+  for (;;);
+  return 0;
 }
 

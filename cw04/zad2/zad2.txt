@@ -1,0 +1,11 @@
+Flagi, które testowałem to SA_RESETHAND, SA_NOCLDSTOP, SA_SIGINFO.
+Wszystkie działają poprawnie według manuala linuxowego.
+
+SA_RESETHAND: Handler obsługuje tylko pierwsze pojawienie się sygnału.
+              Kolejne sygnały są odbierane przez domyślną procedurę.
+SA_NOCLDSTOP: Ustawienie dla sygnału SIGCHLD dzięki któremu handler
+              procesu macierzystego nie otrzymuje sygnału, który
+              wywołałby się po otrzymaniu przez dziecko SIGSTOP, SIGTSTP,
+              SIGTTIN, SIGCONT.
+SA_SIGINFO:   Dzięki tej opcji w handlerze możemy otrzymać więcej informacji
+              o sygnale.

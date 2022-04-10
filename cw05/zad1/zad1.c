@@ -136,7 +136,7 @@ void exec_pipeline(command_t *c) {
 
       execvp(c->prog, c->argv);
 
-      printf("FAILED!\n");
+      printf("exec failed.\n");
       _exit(1);
     }
 
@@ -144,17 +144,6 @@ void exec_pipeline(command_t *c) {
     in = fd[PIPE_READ];
 
     wait(&status);
-  }
-}
-
-void print_command(command_t *c) {
-  printf("prog: %s\n", c->prog);
-  for (int i = 0; i < ARGV_MAX_LENGTH; i++) {
-    if (c->argv[i] == NULL) {
-      printf("argv[%d] = NULL\n", i);
-      break;
-    }
-    printf("argv[%d] = %s\n", i, c->argv[i]);
   }
 }
 
@@ -208,6 +197,7 @@ int main(int argc, char *argv[]) {
   exec_pipeline(merge.head);
 
   free(line);
+  fclose(f);
   return 0;
 }
 

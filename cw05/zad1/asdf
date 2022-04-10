@@ -1,0 +1,5 @@
+składnik1 = ls -l / | grep a
+składnik2 = wc -l
+
+składnik1 | składnik2
+

@@ -30,13 +30,10 @@ int main(int argc, char *argv[]) {
   while ((read = fread(read_buff, 1, num_chars, file_handler)) > 0) {
     read_buff[read] = '\0';
     write = snprintf(write_buff, sizeof(write_buff), "%d%s", row, read_buff);
-    printf("WRITER(%d): %s\n", row, write_buff);
 
-    while (write != num_chars + 1) {
+    while ((int)write != num_chars + 1) {
       write_buff[write++] = '\0';
     }
-
-    printf("writen: %d\n", write);
 
     FILE *pipe_handler = fopen(argv[1], "w");
     if (pipe_handler == NULL) {
@@ -47,8 +44,6 @@ int main(int argc, char *argv[]) {
     //sleep(1 + (rand() + RAND_MAX - 1) / RAND_MAX);
     fclose(pipe_handler);
   }
-
-  printf("WRITER CLOSE %d\n", row);
 
   fclose(file_handler);
   return 0;

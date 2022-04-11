@@ -3,7 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/file.h>
-#include <assert.h>
 
 #define DATA_BUFF 1024 * 256
 #define READ_BUFF_SIZE 1024 * 16
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
   }
 
   int row, num_chars = atoi(argv[3]);
-  size_t read, write;
+  size_t read;
 
   FILE *pipe_handler = fopen(argv[1], "r");
   if (pipe_handler == NULL) {
@@ -72,10 +71,6 @@ int main(int argc, char *argv[]) {
   while ((read = fread(read_buff, 1, num_chars + 1, pipe_handler)) > 0) {
     read_buff[read] = '\0';
     row = read_buff[0] - '0';
-
-    printf("READER: data=%s\n", read_buff);
-
-    assert(read == num_chars + 1);
 
     read--;
     while (read_buff[read] == '\0') {
@@ -95,8 +90,6 @@ int main(int argc, char *argv[]) {
 
     flock(fileno(file_handler), LOCK_UN);
   }
-
-  printf("READER END!!!!\n");
 
   fclose(pipe_handler);
   return 0;

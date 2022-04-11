@@ -6,15 +6,14 @@ CFLASG = -O2 -Wall -Wextra
 build:
 	$(CC) $(CFLASG) writer.c -o writer
 	$(CC) $(CFLASG) reader.c -o reader
-
-test:
 	$(CC) $(CFLASG) tester.c -o tester
-	./tester 6 1 100
 
-run:
-	./writer asdf 1 data/1.txt 33
+test: build
+	./tester 9 2 500
 
 clean:
 	rm writer
 	rm reader
+	rm tester
+	rm fifo
 

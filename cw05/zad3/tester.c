@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
@@ -35,7 +38,7 @@ int main(int argc, char *argv[]) {
       snprintf(p_file, sizeof(p_file), "data/%d.txt", i);
       snprintf(p_chars, sizeof(p_chars), "%d", chars);
 
-      printf("WRITER: %s\n", p_id);
+      printf("Starting writer: %s\n", p_id);
       execl("writer", "writer", "fifo", p_id, p_file, p_chars, NULL);
 
       printf("worker %d failed.\n", i);
@@ -51,7 +54,7 @@ int main(int argc, char *argv[]) {
       char p_chars[32];
       snprintf(p_chars, sizeof(p_chars), "%d", chars);
 
-      printf("READER\n");
+      printf("Starting reader\n");
       execl("reader", "reader", "fifo", "data/res.txt", p_chars, NULL);
       printf("reader %d failed.\n", i);
       _exit(1);
@@ -60,8 +63,10 @@ int main(int argc, char *argv[]) {
 
   int status;
   for (i = 0; i < writers + readers; i++) {
-    waitpid(pids[i], &status, NULL);
+    waitpid(pids[i], &status, 0);
   }
+
+  printf("Done\n");
 
   return 0;
 }

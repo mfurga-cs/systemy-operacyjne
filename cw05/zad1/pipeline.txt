@@ -1,0 +1,7 @@
+składnik1 = ls -l / | grep a
+składnik2 = wc -l
+składnik3 = wc -l | wc -l
+składnik4 = cat /etc/passwd | less
+
+składnik1 | składnik2 | składnik3 | składnik4
+

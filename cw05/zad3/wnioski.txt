@@ -1,0 +1,10 @@
+Dla N > PIPE_BUF pojawiają się błędy w pliku wynikowym w każdym przypadku.
+
+1. wielu producentów, jeden konsument
+  Przy N <= PIPE_BUF program działa prawidłowo (zapis atomiczny).
+
+2. jeden producenta, wielu konsumentów
+  Przy N <= PIPE_BUF pojawiją się błędy w pliku wynikowym.
+
+3. wielu producentów, wielu konsumentów
+  Przy N <= PIPE_BUF pojawiją się błędy w pliku wynikowym.

@@ -9,7 +9,8 @@ build:
 	$(CC) $(CFLASG) tester.c -o tester
 
 test: build
-	./tester 9 2 500
+	./tester 1 10 500
+	python3 tester.py
 
 clean:
 	rm writer

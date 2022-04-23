@@ -12,6 +12,26 @@ int sid;
 int next_client_id = 1;
 int conns[CONNECTION_MAX_SIZE] = { -1 };
 
+void logging(msgbuff_t *msg) {
+  FILE *f = fopen("log.txt", "a");
+  if (f == NULL) {
+    return;
+  }
+
+  time_t t = time(NULL);
+  struct tm *tm = localtime(&t);
+  int client_id = msg->mtype & 0xff;
+  int type = msg->mtype & MESSAGE_TYPE;
+
+  char buff[MESSAGE_MAX_SIZE + 128];
+
+  int p = strftime(buff, sizeof(buff), "[%c] ", tm);
+  p += snprintf(buff + p, sizeof(buff) - p, "[client %d] [type %d] %s\n", client_id, type, msg->mtext);
+
+  fwrite(buff, 1, p, f);
+  fclose(f);
+}
+
 void handle_init(msgbuff_t *msg) {
   if (next_client_id >= CONNECTION_MAX_SIZE) {
     return;
@@ -86,10 +106,13 @@ void handle_2one(msgbuff_t *msg) {
 
 void handle_2all(msgbuff_t *msg) {
   int from = msg->mtype & 0xff;
+  time_t t = time(NULL);
+  struct tm *tm = localtime(&t);
 
   msgbuff_t m;
   m.mtype = MESSAGE_TYPE_2ALL;
-  snprintf(m.mtext, sizeof(m.mtext), "message from client %d: %s", from, msg->mtext);
+  int p = strftime(m.mtext, sizeof(m.mtext), "[%c] ", tm);
+  snprintf(m.mtext + p, sizeof(m.mtext) - p, "message from client %d: %s", from, msg->mtext);
 
   for (int i = 0; i < next_client_id; i++) {
     if (conns[i] == -1) {
@@ -144,6 +167,7 @@ int main(void) {
 
   msgbuff_t msg;
   while (msgrcv(sid, &msg, sizeof(msg.mtext), -MESSAGE_TYPE_MAX, 0) != -1) {
+    logging(&msg);
     switch (msg.mtype & MESSAGE_TYPE) {
       case MESSAGE_TYPE_INIT:
         handle_init(&msg);

@@ -6,6 +6,7 @@
 #define SERVER_PROD_ID 1
 
 #define MESSAGE_TYPE 0xff0000
+#define MESSAGE_TYPE_MAX 0xffffff
 
 #define MESSAGE_TYPE_STOP 0x10000L
 #define MESSAGE_TYPE_LIST 0x20000L

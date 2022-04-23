@@ -34,7 +34,7 @@ void logging(int type, const char *msg) {
 }
 
 void handle_init(char *msg, int size) {
-	(void)size;
+  (void)size;
 
   conns[next_client_id] = mq_open(msg, O_WRONLY);
   if (conns[next_client_id] == -1) {
@@ -55,7 +55,7 @@ void handle_init(char *msg, int size) {
 }
 
 void handle_list(const char *msg, int size) {
-	(void)size;
+  (void)size;
 
   int client_id = msg[0];
 
@@ -74,29 +74,31 @@ void handle_list(const char *msg, int size) {
 }
 
 void handle_stop(const char *msg, int size) {
-	(void)size;
+  (void)size;
 
   int client_id = msg[0];
 
-	if (client_id >= next_client_id) {
-		return;
-	}
+  if (client_id >= next_client_id) {
+    return;
+  }
 
   if (conns[client_id] == -1) {
     return;
   }
 
+  printf("Close connection: %d\n", client_id);
+
   mq_close(conns[client_id]);
-	conns[client_id] = -1;
+  conns[client_id] = -1;
 }
 
 void handle_2one(const char *msg, int size) {
   int from = msg[0];
   int to = msg[1];
 
-	if (from >= next_client_id) {
-		return;
-	}
+  if (from >= next_client_id) {
+    return;
+  }
 
   if (conns[from] == -1) {
     return;
@@ -104,7 +106,7 @@ void handle_2one(const char *msg, int size) {
 
   time_t t = time(NULL);
   struct tm *tm = localtime(&t);
-	char buff[size + 128];
+  char buff[size + 128];
   int p = strftime(buff, sizeof(buff), "[%c] ", tm);
   snprintf(buff + p, sizeof(buff) - p, "message from client %d: %s", from, msg + 2);
 
@@ -114,9 +116,9 @@ void handle_2one(const char *msg, int size) {
 void handle_2all(const char *msg, int size) {
   int from = msg[0];
 
-	if (from >= next_client_id) {
-		return;
-	}
+  if (from >= next_client_id) {
+    return;
+  }
 
   if (conns[from] == -1) {
     return;
@@ -124,29 +126,29 @@ void handle_2all(const char *msg, int size) {
 
   time_t t = time(NULL);
   struct tm *tm = localtime(&t);
-	char buff[size + 128];
+  char buff[size + 128];
   int p = strftime(buff, sizeof(buff), "[%c] ", tm);
   snprintf(buff + p, sizeof(buff) - p, "message from client %d: %s", from, msg + 1);
 
-	for (int i = 0; i < next_client_id; i++) {
+  for (int i = 0; i < next_client_id; i++) {
     if (conns[i] == -1) {
       continue;
     }
     send_message(conns[i], MESSAGE_TYPE_2ALL, buff, sizeof(buff));
-	}
+  }
 }
 
 void close_server(void) {
-	char buff[1];
+  char buff[1];
 
-	for (int i = 0; i < next_client_id; i++) {
+  for (int i = 0; i < next_client_id; i++) {
     if (conns[i] == -1) {
       continue;
     }
     send_message(conns[i], MESSAGE_TYPE_STOP, buff, sizeof(buff));
     mq_close(conns[i]);
     conns[i] = -1;
-	}
+  }
 
   queue_remove(SERVER_NAME);
   _exit(0);
@@ -168,7 +170,7 @@ int main(void) {
 
   printf("mp_open created: %d\n", sid);
 
-	signal(SIGINT, handler_SIGINT);
+  signal(SIGINT, handler_SIGINT);
 
   int read, type;
   unsigned prio;
@@ -176,7 +178,7 @@ int main(void) {
 
   while ((read = recv_message(sid, &type, msg, sizeof(msg), &prio)) != -1) {
 
-		logging(type, msg);
+    logging(type, msg);
 
     switch (type) {
       case MESSAGE_TYPE_INIT:

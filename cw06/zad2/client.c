@@ -20,16 +20,17 @@ int client_id;
 pid_t child;
 
 void handle_list(void) {
-	char buff[1] = { client_id };
-	send_message(sid, MESSAGE_TYPE_LIST, buff, sizeof(buff));
+  char buff[1] = { client_id };
+  send_message(sid, MESSAGE_TYPE_LIST, buff, sizeof(buff));
 }
 
 void handle_stop(void) {
-	char buff[1] = { client_id };
-	send_message(sid, MESSAGE_TYPE_STOP, buff, sizeof(buff));
+  char buff[1] = { client_id };
+  send_message(sid, MESSAGE_TYPE_STOP, buff, sizeof(buff));
 
   mq_close(sid);
-	queue_remove(cname);
+  mq_close(cid);
+  queue_remove(cname);
 
   kill(child, 9);
   _exit(0);
@@ -114,8 +115,8 @@ int main(void) {
 
   child = fork();
   if (child == 0) {
-		char msg[QUEUE_MESSAGE_MAX_SIZE];
-	 	int read, type;
+    char msg[QUEUE_MESSAGE_MAX_SIZE];
+    int read, type;
 
     while ((read = recv_message(cid, &type, msg, sizeof(msg), NULL)) != -1) {
       if (type == MESSAGE_TYPE_STOP) {
@@ -128,7 +129,7 @@ int main(void) {
     return 0;
   }
 
-	signal(SIGINT, handler_SIGINT);
+  signal(SIGINT, handler_SIGINT);
 
   char *line = NULL;
   size_t len = 0;

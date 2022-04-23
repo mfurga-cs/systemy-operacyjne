@@ -48,7 +48,7 @@ void handle_init(msgbuff_t *msg) {
   }
 
   msg->mtext[0] = (char)next_client_id;
-  printf("New client: %d\n", msg->mtext[0]);
+  printf("New connection: %d\n", msg->mtext[0]);
 
   if (send_message(conns[next_client_id], msg) != 0) {
     return;

@@ -1,0 +1,4 @@
+Programy dla różnych wartości N i M działają prawidłowo tzn.
+liczba pizzy w piecu oraz na stole nie przekracza limitu.
+Również w tym samym momencie tylko jeden proces może modyfikować
+piec lub stół.

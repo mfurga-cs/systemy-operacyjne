@@ -1,0 +1,99 @@
+W metodzie numbers każdy z wątków przechodzi po całej bitmapie
+więc złożoność (jak widać w testach) pogarsza się dla większej ilości wątków.
+W metodzie block każdy wątek dostaje część bitmapy dlatego czas wykonania powinien
+maleć. W testach jednak zostaje na tym samym poziomie ponieważ zostały one
+wykonane tylko na 2 fizycznych rdzeniach CPU.
+
+Testy zostały wykonane na i5-5300U CPU @ 2.30GHz (2 core) dla zdjęcia 4000x4000:
+
+* Liczba wątków: 1, Metoda: numbers
+  Thread 0: 0.0342230000000000s
+  Total time: 1.6344639999999999s
+
+* Liczba wątków: 1, Metoda: block
+  Thread 0: 0.0216420000000000s
+  Total time: 1.6169730000000000s
+
+* Liczba wątków: 2, Metoda: numbers
+  Thread 0: 0.2174270000000000s
+  Thread 1: 0.2138690000000000s
+  Total time: 1.8176690000000000s
+
+* Liczba wątków: 2, Metoda: block
+  Thread 0: 0.0196130000000000s
+  Thread 1: 0.0200340000000000s
+  Total time: 1.6319200000000000s
+
+* Liczba wątków: 4, Metoda: numbers
+  Thread 0: 0.3968450000000000s
+  Thread 1: 0.4702020000000000s
+  Thread 2: 0.4872890000000000s
+  Thread 3: 0.3966550000000000s
+  Total time: 2.0773050000000000s
+
+* Liczba wątków: 4, Metoda: block
+  Thread 0: 0.0441100000000000s
+  Thread 1: 0.0442560000000000s
+  Thread 2: 0.0443810000000000s
+  Thread 3: 0.0441260000000000s
+  Total time: 1.6364470000000000s
+
+* Liczba wątków: 8, Metoda: numbers
+  Thread 0: 0.5747409999999999s
+  Thread 1: 0.4015740000000000s
+  Thread 2: 0.8289110000000000s
+  Thread 3: 0.8202330000000000s
+  Thread 4: 0.5791460000000000s
+  Thread 5: 0.8281440000000000s
+  Thread 6: 0.7520930000000000s
+  Thread 7: 0.5423590000000000s
+  Total time: 2.4973060000000000s
+
+* Liczba wątków: 8, Metoda: block
+  Thread 0: 0.0174280000000000s
+  Thread 1: 0.0178610000000000s
+  Thread 2: 0.0185440000000000s
+  Thread 3: 0.0274860000000000s
+  Thread 4: 0.0183980000000000s
+  Thread 5: 0.0099490000000000s
+  Thread 6: 0.0177430000000000s
+  Thread 7: 0.0183220000000000s
+  Total time: 1.6353320000000000s
+
+* Liczba wątków: 16, Metoda: numbers
+  Thread 0: 0.8763550000000000s
+  Thread 1: 0.9560800000000000s
+  Thread 2: 1.0746920000000000s
+  Thread 3: 1.3599319999999999s
+  Thread 4: 1.2071019999999999s
+  Thread 5: 1.4379260000000000s
+  Thread 6: 1.5913050000000000s
+  Thread 7: 1.5845030000000000s
+  Thread 8: 1.5788260000000001s
+  Thread 9: 1.4233819999999999s
+  Thread 10: 1.5034600000000000s
+  Thread 11: 1.3949840000000000s
+  Thread 12: 1.0993710000000001s
+  Thread 13: 1.0094010000000000s
+  Thread 14: 1.0474370000000000s
+  Thread 15: 0.8134890000000000s
+  Total time: 3.2113710000000002s
+
+* Liczba wątków: 16, Metoda: block
+  Thread 0: 0.0127480000000000s
+  Thread 1: 0.0261140000000000s
+  Thread 2: 0.0148220000000000s
+  Thread 3: 0.0175650000000000s
+  Thread 4: 0.0204570000000000s
+  Thread 5: 0.0163000000000000s
+  Thread 6: 0.0320860000000000s
+  Thread 7: 0.0127160000000000s
+  Thread 8: 0.0180380000000000s
+  Thread 9: 0.0345970000000000s
+  Thread 10: 0.0330980000000000s
+  Thread 11: 0.0289820000000000s
+  Thread 12: 0.0273130000000000s
+  Thread 13: 0.0182430000000000s
+  Thread 14: 0.0193760000000000s
+  Thread 15: 0.0241450000000000s
+  Total time: 1.6410769999999999s

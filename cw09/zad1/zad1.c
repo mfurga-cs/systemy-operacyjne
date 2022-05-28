@@ -39,20 +39,6 @@ void *santa_claus(void *p) {
     puts("Mikolaj: budze sie");
     pthread_mutex_unlock(&mutex_santa_claus);
 
-    pthread_mutex_lock(&mutex_elve);
-    if (elves_waiting_size == 3) {
-      pthread_mutex_unlock(&mutex_elve);
-
-      printf("Mikolaj: rozwiazuje problemy elfow (%d, %d, %d)\n",
-        elves_waiting[0], elves_waiting[1], elves_waiting[2]);
-      sleep(RAND_RANGE(1, 2));
-
-      pthread_mutex_lock(&mutex_elve);
-      elves_waiting_size = 0;
-      pthread_cond_broadcast(&cond_elve);
-    }
-    pthread_mutex_unlock(&mutex_elve);
-
     pthread_mutex_lock(&mutex_reindeer);
     if (reindeers_waiting == 9) {
       delivered_toys++;
@@ -67,6 +53,20 @@ void *santa_claus(void *p) {
       puts("Mikolaj: Dostarczylem 3 prezenty. Koniec na dzis");
       exit(0);
     }
+
+    pthread_mutex_lock(&mutex_elve);
+    if (elves_waiting_size == 3) {
+      pthread_mutex_unlock(&mutex_elve);
+
+      printf("Mikolaj: rozwiazuje problemy elfow (%d, %d, %d)\n",
+        elves_waiting[0], elves_waiting[1], elves_waiting[2]);
+      sleep(RAND_RANGE(1, 2));
+
+      pthread_mutex_lock(&mutex_elve);
+      elves_waiting_size = 0;
+      pthread_cond_broadcast(&cond_elve);
+    }
+    pthread_mutex_unlock(&mutex_elve);
 
     puts("Mikolaj: zasypiam");
   }

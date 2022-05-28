@@ -45,11 +45,7 @@ void *santa_claus(void *p) {
 
       printf("Mikolaj: rozwiazuje problemy elfow (%d, %d, %d)\n",
         elves_waiting[0], elves_waiting[1], elves_waiting[2]);
-
-      for (int i = 0; i < 3; i++) {
-        printf("Elf(%d): Mikolaj rozwiazuje problem\n", elves_waiting[i]);
-        sleep(RAND_RANGE(1, 2));
-      }
+      sleep(RAND_RANGE(1, 2));
 
       pthread_mutex_lock(&mutex_elve);
       elves_waiting_size = 0;
@@ -101,6 +97,9 @@ check:
 
       pthread_cond_wait(&cond_elve, &mutex_elve);
       pthread_mutex_unlock(&mutex_elve);
+
+      printf("Elf(%d): Mikolaj rozwiazuje problem\n", id);
+      sleep(RAND_RANGE(1, 2));
    } else {
       printf("Elf(%d): czeka na powrot elfow\n", id);
       pthread_cond_wait(&cond_elve, &mutex_elve);

@@ -48,6 +48,9 @@ game_t *games_add(games_t *g, int pid1, int pid2,
   memcpy(gg->player_nick[0], pnick1, strlen(pnick1));
   memcpy(gg->player_nick[1], pnick2, strlen(pnick2));
 
+  gg->player_nick[0][strlen(pnick1)] = '\0';
+  gg->player_nick[1][strlen(pnick2)] = '\0';
+
   memset(gg->board, ' ', sizeof(gg->board));
   /*
   for (int i = 1; i <= 9; i++) {
@@ -72,7 +75,10 @@ int games_nick_available(games_t *g, char *nick) {
 }
 
 int game_move(game_t *g, int player, int move) {
-  assert(move >= 1 && move <= 9);
+  if (move < 1 || move > 9) {
+    return 1;
+  }
+
   move--;
 
   int n = g->player_id[0] == player ? 0 : 1;

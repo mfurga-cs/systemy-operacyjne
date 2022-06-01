@@ -15,7 +15,7 @@
 
 #define MAX_CLIENTS 16
 #define MESSAGE_TYPE_NICK 0
-#define MESSAGE_TYPE_MOVE 'm'
+#define MESSAGE_TYPE_MOVE 1
 
 #define POLLS_SIZE ((MAX_CLIENTS) + 1)
 
@@ -57,23 +57,30 @@ int listen_socket_tcp(int port) {
   return fd;
 }
 
+void close_connection(struct pollfd *polls, int fd) {
+ for (int i = 0; i < POLLS_SIZE; i++) {
+    if (polls[i].fd == fd) {
+      polls[i].fd = 0;
+      polls[i].events = 0;
+      polls[i].revents = 0;
+    }
+  }
+  //shutdown(fd, SHUT_RDWR);
+  close(fd);
+}
+
 void handle_close(struct pollfd *polls, int fd) {
   if (fd == last_fd) {
     printf("Close connection (last): %d\n", fd);
     last_fd = -1;
-    for (int i = 0; i < POLLS_SIZE; i++) {
-      if (polls[i].fd == fd) {
-        polls[i].fd = 0;
-        polls[i].events = 0;
-        polls[i].revents = 0;
-      }
-    }
-    close(fd);
+    close_connection(polls, fd);
     return;
   }
 
   game_t *g = games_get(&games, fd);
-  assert(g != NULL);
+  if (g == NULL) {
+    return;
+  }
 
   printf("Close connection: %d %d\n", g->player_id[0], g->player_id[1]);
   g->active = 0;
@@ -81,28 +88,23 @@ void handle_close(struct pollfd *polls, int fd) {
   int p1 = g->player_id[0];
   int p2 = g->player_id[1];
 
-  for (int i = 0; i < POLLS_SIZE; i++) {
-    if (polls[i].fd == p1 || polls[i].fd == p2) {
-      polls[i].fd = 0;
-      polls[i].events = 0;
-      polls[i].revents = 0;
-    }
-  }
-
-  close(p1);
-  close(p2);
+  close_connection(polls, p1);
+  close_connection(polls, p2);
 }
 
-void handle_message_nick(char *nick, int fd) {
+void handle_message_nick(struct pollfd *polls, char *nick, int fd) {
   char res[1024];
   int size;
+
+  printf("New name: %s\n", nick);
 
   if (!games_nick_available(&games, nick)) {
     printf("%s exists 1.\n", nick);
     size = snprintf(res, sizeof(res),
       "The given nick already exists. Try another one.\n");
     send(fd, res, size, 0);
-    close(fd);
+    //close(fd);
+    close_connection(polls, fd);
     return;
   }
 
@@ -119,7 +121,8 @@ void handle_message_nick(char *nick, int fd) {
     size = snprintf(res, sizeof(res),
       "The given nick already exists. Try another one.\n");
     send(fd, res, size, 0);
-    close(fd);
+    //close(fd);
+    close_connection(polls, fd);
     return;
   }
 
@@ -132,11 +135,9 @@ void handle_message_nick(char *nick, int fd) {
   last_fd = -1;
 }
 
-void handle_message_move(int move, int fd) {
+void handle_message_move(struct pollfd *polls, int move, int fd) {
   char res[1024];
   int size;
-
-  printf("move: %d to %d\n", fd, move);
 
   game_t *g = games_get(&games, fd);
   assert(g != NULL);
@@ -146,6 +147,12 @@ void handle_message_move(int move, int fd) {
 
   send(g->player_id[0], res, size, 0);
   send(g->player_id[1], res, size, 0);
+
+  if (game_end(g)) {
+    g->active = 0;
+    close_connection(polls, g->player_id[0]);
+    close_connection(polls, g->player_id[1]);
+  }
 }
 
 void handle_connections(int server_tcp, int server_unix) {
@@ -200,10 +207,10 @@ void handle_connections(int server_tcp, int server_unix) {
 
         switch (msg[0]) {
           case MESSAGE_TYPE_NICK:
-            handle_message_nick(msg + 1, polls[i].fd);
+            handle_message_nick(polls, msg + 1, polls[i].fd);
           break;
           case MESSAGE_TYPE_MOVE:
-            handle_message_move(msg[1] - '0', polls[i].fd);
+            handle_message_move(polls, msg[1] - '0', polls[i].fd);
           break;
           default:
             printf("%x command not supported.\n", msg[0]);

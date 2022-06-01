@@ -8,6 +8,7 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -17,7 +18,7 @@
 #define MESSAGE_TYPE_NICK 0
 #define MESSAGE_TYPE_MOVE 1
 
-#define POLLS_SIZE ((MAX_CLIENTS) + 1)
+#define POLLS_SIZE ((MAX_CLIENTS) + 2)
 
 games_t games;
 int last_fd;
@@ -43,6 +44,41 @@ int listen_socket_tcp(int port) {
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(port);
+
+  if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+    puts("bind failed.");
+    return -1;
+  }
+
+  if (listen(fd, 16) == -1) {
+    puts("listen failed.");
+    return -1;
+  }
+
+  return fd;
+}
+
+int listen_socket_unix(char *path) {
+
+  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (fd == -1) {
+    puts("Failed to create a socket.");
+    return -1;
+  }
+
+  int opt = 1;
+  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+      &opt, sizeof(opt)) == -1) {
+    puts("setsockopt failed.");
+    return -1;
+  }
+
+  struct sockaddr_un addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  memcpy(addr.sun_path, path, strlen(path));
+
+  unlink(path);
 
   if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
     puts("bind failed.");
@@ -95,8 +131,6 @@ void handle_close(struct pollfd *polls, int fd) {
 void handle_message_nick(struct pollfd *polls, char *nick, int fd) {
   char res[1024];
   int size;
-
-  printf("New name: %s\n", nick);
 
   if (!games_nick_available(&games, nick)) {
     printf("%s exists 1.\n", nick);
@@ -160,6 +194,9 @@ void handle_connections(int server_tcp, int server_unix) {
   memset(polls, 0, sizeof(polls));
   polls[0].fd = server_tcp;
   polls[0].events = POLLIN | POLLPRI;
+  polls[1].fd = server_unix;
+  polls[1].events = POLLIN | POLLPRI;
+
   int conns = 0;
 
   while (1) {
@@ -175,7 +212,7 @@ void handle_connections(int server_tcp, int server_unix) {
 
       printf("New TCP connection: %d\n", cfd);
 
-      for (size_t i = 1; i < POLLS_SIZE; i++) {
+      for (size_t i = 2; i < POLLS_SIZE; i++) {
         if (polls[i].fd == 0) {
           polls[i].fd = cfd;
           polls[i].events = POLLIN | POLLRDHUP;
@@ -185,7 +222,24 @@ void handle_connections(int server_tcp, int server_unix) {
       conns++;
     }
 
-    for (size_t i = 1; i < POLLS_SIZE; i++) {
+    if (polls[1].revents & POLLIN && conns < MAX_CLIENTS) {
+      struct sockaddr_un client;
+      socklen_t client_len = sizeof(client);
+      int cfd = accept(server_unix, (struct sockaddr *)&client, &client_len);
+
+      printf("New UNIX connection: %d\n", cfd);
+
+      for (size_t i = 2; i < POLLS_SIZE; i++) {
+        if (polls[i].fd == 0) {
+          polls[i].fd = cfd;
+          polls[i].events = POLLIN | POLLRDHUP;
+          break;
+        }
+      }
+      conns++;
+    }
+
+    for (size_t i = 2; i < POLLS_SIZE; i++) {
       if (polls[i].fd == 0) {
         continue;
       }
@@ -202,8 +256,6 @@ void handle_connections(int server_tcp, int server_unix) {
           continue;
         }
         msg[size] = '\0';
-
-        printf("New message: %s\n", msg + 1);
 
         switch (msg[0]) {
           case MESSAGE_TYPE_NICK:
@@ -239,13 +291,14 @@ int main(int argc, char **argv) {
   printf("Init game server ...\n");
 
   int server_tcp = listen_socket_tcp(port);
-  if (server_tcp == -1) {
+  int server_unix = listen_socket_unix(path);
+  if (server_tcp == -1 || server_unix == -1) {
     return 1;
   }
 
   printf("Listening on %d ...\n", port);
 
-  handle_connections(server_tcp, 0);
+  handle_connections(server_tcp, server_unix);
 
   return 0;
 }

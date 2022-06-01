@@ -8,6 +8,7 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -42,6 +43,28 @@ int connect_socket_tcp(int port) {
   return fd;
 }
 
+int connect_socket_unix(char *path) {
+
+  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (fd == -1) {
+    puts("Failed to create a socket.");
+    return -1;
+  }
+
+  struct sockaddr_un addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strcpy(addr.sun_path, path);
+
+  if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+    perror("error: ");
+    puts("connect failed.");
+    return -1;
+  }
+
+  return fd;
+}
+
 int main(int argc, char **argv) {
 
   if (argc != 4) {
@@ -56,9 +79,10 @@ int main(int argc, char **argv) {
     int port = atoi(argv[3]);
     fd = connect_socket_tcp(port);
   } else if (strcmp(argv[2], "UNIX") == 0) {
-
+    fd = connect_socket_unix(argv[3]);
   } else {
     printf("Invalid connection type.\n");
+    return 1;
   }
 
   if (fd == -1) {
@@ -91,19 +115,18 @@ int main(int argc, char **argv) {
       if (size > 0) {
         msg[1] = msg[0];
         msg[0] = MESSAGE_TYPE_MOVE;
-        write(fd, msg, 2);
+        size = write(fd, msg, 2);
       }
-    }
-
-    if (polls[1].revents & POLLRDHUP) {
-      printf("END!\n");
-      break;
     }
 
     if (polls[1].revents & POLLIN) {
       size = read(fd, msg, sizeof(msg));
       msg[size] = '\0';
       printf("%s", msg);
+    }
+
+    if (polls[1].revents & POLLRDHUP) {
+      break;
     }
   }
 
